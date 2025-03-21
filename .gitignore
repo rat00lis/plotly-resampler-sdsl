@@ -1,3 +1,6 @@
+#fork excludes
+images/
+
 venv*
 .cache_datasets/
 *.ruff*
