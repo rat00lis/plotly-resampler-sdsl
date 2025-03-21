@@ -1,5 +1,7 @@
 #fork excludes
 images/
+fork-env/
+testing/
 
 venv*
 .cache_datasets/
