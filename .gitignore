@@ -2,7 +2,7 @@
 images/
 fork-env/
 testing/
-external/
+externals/
 
 venv*
 .cache_datasets/
