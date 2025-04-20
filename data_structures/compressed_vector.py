@@ -65,3 +65,27 @@ class CompressedVector:
         """
         total = sdsl4py.size_in_bytes(self.integer_part) + sdsl4py.size_in_bytes(self.decimal_part)
         return total
+    
+    def __len__(self):
+        """
+        Return the number of elements in the compressed vector.
+        """
+        return self.n_elements
+    
+    def __getitem__(self, index):
+        """
+        Return the value at the given index.
+        """
+        if isinstance(index, int):
+            if index < 0 or index >= self.n_elements:
+                raise IndexError("Index out of range")
+            return self.integer_part[index] + self.decimal_part[index] / (10 ** self.decimal_width)
+        elif isinstance(index, slice):
+            # Handle slicing
+            start, stop, step = index.indices(self.n_elements)
+            return [
+                self.integer_part[i] + self.decimal_part[i] / (10 ** self.decimal_width)
+                for i in range(start, stop, step)
+            ]
+        else:
+            raise TypeError("Invalid index type")
