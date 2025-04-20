@@ -9,27 +9,26 @@ class CompressedVector:
         self.current = 0
         self.decimal_places = decimal_places
         self.sign_part = None
-        self.build_compressed_vector(original_vector, data_structure)
+        self._build_compressed_vector(original_vector, data_structure)
 
     def __iter__(self):
         return self
     
     def __next__(self):
         if self.current < self.n_elements:
-            value = self.integer_part[self.current] + self.decimal_part[self.current] / (10 ** self.decimal_width)
-            value = value if self.sign_part[self.current] == 1 else -value
+            value = self._reconstruct_float_value(self.current)
             self.current += 1
             return value
         raise StopIteration
     
-    def build_compressed_vector(self, original_vector, data_structure='default'):
+    def _build_compressed_vector(self, original_vector, data_structure='default'):
         """
         Build the compressed vector from the original vector.
         """
-        self.create_vectors(original_vector, data_structure)
-        self.fill_vectors(original_vector, data_structure)
+        self._create_vectors(original_vector, data_structure)
+        self._fill_vectors(original_vector, data_structure)
 
-    def fill_vectors(self, original_vector, data_structure='default'):
+    def _fill_vectors(self, original_vector, data_structure='default'):
         """
         Fill the integer and decimal vectors with the values from the original vector.
         """
@@ -52,7 +51,7 @@ class CompressedVector:
             # Store the sign part
             self.sign_part[i] = 1 if original_vector[i] >= 0 else 0
 
-    def create_vectors(self, original_vector, data_structure='default'):
+    def _create_vectors(self, original_vector, data_structure='default'):
         # Calculate int_width for the integer part using absolute values
         max_abs_value = max(abs(x) for x in original_vector)
         int_width = max(1, math.ceil(math.log2(int(max_abs_value) + 1)))
@@ -75,6 +74,25 @@ class CompressedVector:
         # Sign part
         self.sign_part = sdsl4py.bit_vector(size=self.n_elements, default_value=0)
 
+    # Helper function to get the reconstructed value as a float
+    def _reconstruct_float_value(self, index):
+        """
+        Reconstructs the original float value at the given index by combining
+        integer part, decimal part and sign.
+
+        Args:
+            index (int): Index of the value to reconstruct
+
+        Returns:
+            float: Reconstructed value with correct sign
+        """
+        value = (
+            self.integer_part[index]  # integer part
+            + self.decimal_part[index] / (10 ** self.decimal_width)  # decimal part
+        )
+        return value if self.sign_part[index] == 1 else -value  # sign part
+    
+    
     def size_in_bytes(self):
         """
         Return the size in bytes of the compressed vector.
@@ -101,21 +119,18 @@ class CompressedVector:
     
     def __getitem__(self, index):
         """
-        Return the value at the given index, including the sign part.
+        Return the value at the given index.
         """
+        # Handle get the value at the specified index
         if isinstance(index, int):
-            if index < 0 or index >= self.n_elements:
+            if index < 0 or index >= self.n_elements:  # Check for out of range
                 raise IndexError("Index out of range")
-            value = self.integer_part[index] + self.decimal_part[index] / (10 ** self.decimal_width)
-            return value if self.sign_part[index] == 1 else -value
+            return self._reconstruct_float_value(index)
+
+        # Handle slicing
         elif isinstance(index, slice):
-            # Handle slicing
             start, stop, step = index.indices(self.n_elements)
-            return [
-                (self.integer_part[i] + self.decimal_part[i] / (10 ** self.decimal_width)) 
-                if self.sign_part[i] == 1 else 
-                -(self.integer_part[i] + self.decimal_part[i] / (10 ** self.decimal_width))
-                for i in range(start, stop, step)
-            ]
+            return [self._reconstruct_float_value(i) for i in range(start, stop, step)]
+
         else:
             raise TypeError("Invalid index type")
