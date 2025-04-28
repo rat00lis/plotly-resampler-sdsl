@@ -2,14 +2,13 @@ import sdsl4py
 import math
 
 class CompressedVector:
-    def __init__(self, n_elements, original_vector, data_structure='default', decimal_places=8):
-        self.n_elements = n_elements
+    def __init__(self):
+        self.n_elements = 0
         self.integer_part = None
         self.decimal_part = None
         self.current = 0
-        self.decimal_places = decimal_places
+        self.decimal_places = None
         self.sign_part = None
-        self._build_compressed_vector(original_vector, data_structure)
 
     def __iter__(self):
         return self
@@ -93,24 +92,6 @@ class CompressedVector:
         return value if self.sign_part[index] == 1 else -value  # sign part
     
     
-    def size_in_bytes(self):
-        """
-        Return the size in bytes of the compressed vector.
-        """
-        total = (
-                # sdsl4py vectors
-                sdsl4py.size_in_bytes(self.integer_part) 
-                + sdsl4py.size_in_bytes(self.decimal_part)
-                + sdsl4py.size_in_bytes(self.sign_part)
-
-                # self attributes
-                + self.n_elements.__sizeof__()
-                + self.decimal_places.__sizeof__()
-                + self.decimal_width.__sizeof__()
-                + self.current.__sizeof__()
-                )
-        return total
-    
     def __len__(self):
         """
         Return the number of elements in the compressed vector.
@@ -134,3 +115,62 @@ class CompressedVector:
 
         else:
             raise TypeError("Invalid index type")
+        
+    
+    def build_from_vector(self, original_vector, data_structure='default', decimal_places=4):
+        """
+        Build the compressed vector from a vector.
+        Args:
+            original_vector (list): The original vector to compress.
+            data_structure (str): The data structure to use for compression.
+            decimal_places (int): The number of decimal places to keep.
+        """
+        self.n_elements = len(original_vector)
+        self.decimal_places = decimal_places
+        self._build_compressed_vector(original_vector, data_structure)
+
+    def build_from_file(self, file_path, column=1, data_structure='default', decimal_places=4, delimiter=";", truncate=None):
+        """
+        Build the compressed vector from a specific column in a csv file.
+        Args:
+            file_path (str): The path to the file containing the original vector.
+            column (int): The column index (0-based) to extract the vector from.
+            data_structure (str): The data structure to use for compression.
+            decimal_places (int): The number of decimal places to keep.
+            delimiter (str): The delimiter used in the csv file.
+            truncate (int): The maximum number of rows to process. If None, process all rows.
+        """
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+            original_vector = []
+            for i, line in enumerate(lines):
+                if truncate is not None and i >= truncate:
+                    break
+                values = line.strip().split(delimiter)
+                if len(values) > column:
+                    try:
+                        original_vector.append(float(values[column]))
+                    except ValueError:
+                        pass
+            self.n_elements = len(original_vector)
+            self.decimal_places = decimal_places
+            self._build_compressed_vector(original_vector, data_structure)
+    
+    def size_in_bytes(self):
+        """
+        Return the size in bytes of the compressed vector.
+        """
+        total = (
+                # sdsl4py vectors
+                sdsl4py.size_in_bytes(self.integer_part) 
+                + sdsl4py.size_in_bytes(self.decimal_part)
+                + sdsl4py.size_in_bytes(self.sign_part)
+
+                # self attributes
+                + self.n_elements.__sizeof__()
+                + self.decimal_places.__sizeof__()
+                + self.decimal_width.__sizeof__()
+                + self.current.__sizeof__()
+                )
+        return total
+    
