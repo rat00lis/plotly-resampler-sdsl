@@ -9,6 +9,8 @@ class CompressedVector:
         self.current = 0
         self.decimal_places = None
         self.sign_part = None
+        self.int_part_structure = None
+        self.dec_part_structure = None
 
     def __iter__(self):
         return self
@@ -20,14 +22,15 @@ class CompressedVector:
             return value
         raise StopIteration
     
-    def _build_compressed_vector(self, original_vector, data_structure='default'):
+    def _build_compressed_vector(self, original_vector):
         """
         Build the compressed vector from the original vector.
         """
-        self._create_vectors(original_vector, data_structure)
-        self._fill_vectors(original_vector, data_structure)
+        self._create_vectors(original_vector)
+        self._fill_vectors(original_vector)
 
-    def _fill_vectors(self, original_vector, data_structure='default'):
+
+    def _fill_vectors(self, original_vector):
         """
         Fill the integer and decimal vectors with the values from the original vector.
         """
@@ -50,12 +53,7 @@ class CompressedVector:
             # Store the sign part
             self.sign_part[i] = 1 if original_vector[i] >= 0 else 0
 
-    def _create_vectors(self, original_vector, data_structure='default'):
-        # Calculate int_width for the integer part using absolute values
-        max_abs_value = max(abs(x) for x in original_vector)
-        int_width = max(1, math.ceil(math.log2(int(max_abs_value) + 1)))
-        self.integer_part = sdsl4py.int_vector(size=self.n_elements, default_value=0, int_width=int_width)
-    
+    def _create_vectors(self, original_vector):
         # Determine decimal width
         if self.decimal_places is None:
             # Convert to string without scientific notation
@@ -64,11 +62,27 @@ class CompressedVector:
             max_decimal_places = min(max_decimal_places, 50)  # Reasonable upper limit
         else:
             max_decimal_places = self.decimal_places
+        
+        # decimal width
         self.decimal_width = max_decimal_places
-    
+         # Calculate int_width for the integer part using absolute values
+        max_abs_value = max(abs(x) for x in original_vector)
+        int_width = max(1, math.ceil(math.log2(int(max_abs_value) + 1)))
+
+        # Create integer part vector
+        integer_part = sdsl4py.int_vector(size=self.n_elements, default_value=0, int_width=int_width)
+        if self.int_part_structure is not None:
+            self.integer_part = self.int_part_structure(integer_part)
+        else:
+            self.integer_part = integer_part
+
         # Calculate int_width for the decimal part
         decimal_int_width = math.ceil(math.log2(10 ** max_decimal_places))
         self.decimal_part = sdsl4py.int_vector(size=self.n_elements, default_value=0, int_width=decimal_int_width)
+        if self.dec_part_structure is not None:
+            self.decimal_part = self.dec_part_structure(self.decimal_part)
+        else:
+            self.decimal_part = self.decimal_part
     
         # Sign part
         self.sign_part = sdsl4py.bit_vector(size=self.n_elements, default_value=0)
@@ -116,8 +130,23 @@ class CompressedVector:
         else:
             raise TypeError("Invalid index type")
         
+    def set_int_part_structure(self, int_part_structure):
+        """
+        Set the structure for the integer part vector.
+        Args:
+            int_part_structure (function): The function to use for the integer part vector.
+        """
+        self.int_part_structure = int_part_structure
+
+    def set_dec_part_structure(self, dec_part_structure):
+        """
+        Set the structure for the decimal part vector.
+        Args:
+            dec_part_structure (function): The function to use for the decimal part vector.
+        """
+        self.dec_part_structure = dec_part_structure
     
-    def build_from_vector(self, original_vector, data_structure='default', decimal_places=4):
+    def build_from_vector(self, original_vector, decimal_places=4):
         """
         Build the compressed vector from a vector.
         Args:
@@ -127,9 +156,9 @@ class CompressedVector:
         """
         self.n_elements = len(original_vector)
         self.decimal_places = decimal_places
-        self._build_compressed_vector(original_vector, data_structure)
+        self._build_compressed_vector(original_vector)
 
-    def build_from_file(self, file_path, column=1, data_structure='default', decimal_places=4, delimiter=";", truncate=None):
+    def build_from_file(self, file_path, column=1, decimal_places=4, delimiter=";", truncate=None):
         """
         Build the compressed vector from a specific column in a csv file.
         Args:
@@ -154,7 +183,7 @@ class CompressedVector:
                         pass
             self.n_elements = len(original_vector)
             self.decimal_places = decimal_places
-            self._build_compressed_vector(original_vector, data_structure)
+            self._build_compressed_vector(original_vector)
     
     def size_in_bytes(self):
         """
