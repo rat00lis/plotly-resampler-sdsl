@@ -1,7 +1,6 @@
 import time
 from unittest.mock import patch
 from plotly_resampler.aggregation.plotly_aggregator_parser import PlotlyAggregatorParser
-from plotly_resampler import FigureWidgetResampler
 import numpy as np
 from contextlib import contextmanager
 
