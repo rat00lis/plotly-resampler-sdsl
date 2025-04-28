@@ -186,6 +186,32 @@ class PlotlyAggregatorParser:
         hf_x_parsed = PlotlyAggregatorParser.parse_hf_data(hf_x)
         hf_y_parsed = PlotlyAggregatorParser.parse_hf_data(hf_y)
 
+        # Downsample the data
+        agg_x, agg_y, indices = PlotlyAggregatorParser.process_downsampling(
+            hf_trace_data,
+            hf_x,
+            hf_y,
+            hf_x_parsed,
+            hf_y_parsed,
+            start_idx,
+        )
+
+        return PlotlyAggregatorParser._handle_gaps(
+            hf_trace_data, hf_x=hf_x, agg_x=agg_x, agg_y=agg_y, indices=indices
+        )
+    
+    @staticmethod
+    def process_downsampling(
+        hf_trace_data: dict,
+        hf_x: np.ndarray,
+        hf_y: np.ndarray,
+        hf_x_parsed: np.ndarray,
+        hf_y_parsed: np.ndarray,
+        start_idx: int,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Process downsampling based on the downsampler type."""
+        downsampler = hf_trace_data["downsampler"]
+
         if isinstance(downsampler, DataPointSelector):
             s_v = hf_y_parsed
             if isinstance(s_v, pd.Categorical):  # pd.Categorical (has no .values)
@@ -197,8 +223,7 @@ class PlotlyAggregatorParser:
                 **hf_trace_data.get("downsampler_kwargs", {}),
             )
             if isinstance(hf_trace_data["x"], pd.RangeIndex):
-                # we avoid slicing the default pd.RangeIndex (as this is not an
-                # in-memory array) - this proves to be faster than slicing the index.
+                # Avoid slicing the default pd.RangeIndex (not an in-memory array)
                 agg_x = (
                     start_idx
                     + hf_trace_data["x"].start
@@ -215,8 +240,7 @@ class PlotlyAggregatorParser:
                 **hf_trace_data.get("downsampler_kwargs", {}),
             )
             if isinstance(hf_trace_data["x"], pd.RangeIndex):
-                # we avoid slicing the default pd.RangeIndex (as this is not an
-                # in-memory array) - this proves to be faster than slicing the index.
+                # Avoid slicing the default pd.RangeIndex (not an in-memory array)
                 agg_x = (
                     start_idx
                     + hf_trace_data["x"].start
@@ -230,6 +254,4 @@ class PlotlyAggregatorParser:
                 + f"DataAggregator or a DataPointSelector, got {type(downsampler)}"
             )
 
-        return PlotlyAggregatorParser._handle_gaps(
-            hf_trace_data, hf_x=hf_x, agg_x=agg_x, agg_y=agg_y, indices=indices
-        )
+        return agg_x, agg_y, indices
