@@ -4,6 +4,7 @@ fork-env/
 testing/
 externals/
 input/
+htmls/
 
 venv*
 .cache_datasets/
