@@ -52,6 +52,16 @@ class CompressedVector:
     
             # Store the sign part
             self.sign_part[i] = 1 if original_vector[i] >= 0 else 0
+        
+        if self.int_part_structure is not None:
+            self.integer_part = self.int_part_structure(self.integer_part)
+        else:
+            self.integer_part = self.integer_part
+        if self.dec_part_structure is not None:
+            self.decimal_part = self.dec_part_structure(self.decimal_part)
+        else:
+            self.decimal_part = self.decimal_part
+
 
     def _create_vectors(self, original_vector):
         # Determine decimal width
@@ -70,20 +80,12 @@ class CompressedVector:
         int_width = max(1, math.ceil(math.log2(int(max_abs_value) + 1)))
 
         # Create integer part vector
-        integer_part = sdsl4py.int_vector(size=self.n_elements, default_value=0, int_width=int_width)
-        if self.int_part_structure is not None:
-            self.integer_part = self.int_part_structure(integer_part)
-        else:
-            self.integer_part = integer_part
+        self.integer_part = sdsl4py.int_vector(size=self.n_elements, default_value=0, int_width=int_width)
 
         # Calculate int_width for the decimal part
         decimal_int_width = math.ceil(math.log2(10 ** max_decimal_places))
         self.decimal_part = sdsl4py.int_vector(size=self.n_elements, default_value=0, int_width=decimal_int_width)
-        if self.dec_part_structure is not None:
-            self.decimal_part = self.dec_part_structure(self.decimal_part)
-        else:
-            self.decimal_part = self.decimal_part
-    
+
         # Sign part
         self.sign_part = sdsl4py.bit_vector(size=self.n_elements, default_value=0)
 
