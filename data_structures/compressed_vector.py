@@ -13,6 +13,7 @@ class CompressedVector:
         self.dec_part_structure = None
 
     def __iter__(self):
+        self.current = 0  # Reset the current index for iteration
         return self
     
     def __next__(self):
