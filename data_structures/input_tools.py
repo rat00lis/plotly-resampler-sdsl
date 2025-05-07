@@ -53,6 +53,9 @@ class InputTools:
                 total_lines = sum(1 for line in file if line.strip())
                 if truncate > total_lines:
                     print(f"Warning: Truncate value ({truncate}) is larger than the file length ({total_lines})")
+                    #if truncate is a greater value than the file length by a factor of 10, stop the process
+                    if truncate > total_lines * 10:
+                        raise Exception(f"Truncate value ({truncate}) is too large. File length is {total_lines}.")
         match option:
             case "default":
                 with open(file_path, 'r') as file:
