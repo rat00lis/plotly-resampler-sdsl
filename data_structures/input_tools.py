@@ -48,6 +48,11 @@ class InputTools:
         x = []
         y = []
         line_count = 0
+        if truncate is not None:
+            with open(file_path, 'r') as file:
+                total_lines = sum(1 for line in file if line.strip())
+                if truncate > total_lines:
+                    print(f"Warning: Truncate value ({truncate}) is larger than the file length ({total_lines})")
         match option:
             case "default":
                 with open(file_path, 'r') as file:
