@@ -5,10 +5,9 @@ import pandas as pd
 import plotly.express as px  # Use Plotly Express for plotting
 
 file_path_root = "benchmark/output/"
-exp_names =[
-    "downsampling_comparison",
-    "add_trace_comparison"
-]
+# Dynamically get all experiment names from subdirectories
+exp_names = [d for d in os.listdir(file_path_root) if os.path.isdir(os.path.join(file_path_root, d))]
+print(f"Found experiments: {exp_names}")
 
 def run_all_experiments():
     for exp_name in exp_names:
@@ -125,7 +124,7 @@ def plot_experiment_results(results_dict, exp_name, file_path, include_stdev=Fal
     
     df = pd.DataFrame(data)
     
-    # Plotting
+    # Plotting regular plot
     if include_stdev:
         fig = px.line(df, x='n_size', y='mean', color='option', error_y='stdev',
                   title=f'Experiment Results for {exp_name}',
@@ -136,5 +135,20 @@ def plot_experiment_results(results_dict, exp_name, file_path, include_stdev=Fal
                   labels={'n_size': 'N Size', 'mean': 'Mean Time (s)', 'option': 'Option'})
     
     fig.write_image(file_path)  # Save the figure as a PNG file
+    
+    # Plotting log plot
+    log_file_path = file_path.replace('.png', '_log.png')
+    if include_stdev:
+        fig_log = px.line(df, x='n_size', y='mean', color='option', error_y='stdev',
+                  title=f'Experiment Results for {exp_name} (Log Scale)',
+                  labels={'n_size': 'N Size', 'mean': 'Mean Time (s)', 'option': 'Option'},
+                  log_y=True)
+    else:
+        fig_log = px.line(df, x='n_size', y='mean', color='option',
+                  title=f'Experiment Results for {exp_name} (Log Scale)',
+                  labels={'n_size': 'N Size', 'mean': 'Mean Time (s)', 'option': 'Option'},
+                  log_y=True)
+    
+    fig_log.write_image(log_file_path)  # Save the log plot as a PNG file
 
 run_all_experiments()
