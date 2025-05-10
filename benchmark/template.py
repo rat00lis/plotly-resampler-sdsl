@@ -1,7 +1,7 @@
 from benchmark.exp_runner import setup_experiment, run_with_timing
 from data_structures import input_tools
 
-exp_name = "downsampling_comparison"
+exp_name = "TEMPLATE"
 exp = setup_experiment(exp_name)
 
 @exp.automain
@@ -14,3 +14,18 @@ def run(cases, iterations, n_range, file_input_list, decimal_places):
     results = run_with_timing(input_tools_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations)
     exp.log_scalar("num_cases", len(results))
     return results
+
+# Override default config
+# @exp.config
+# def default_config():
+#     cases = [
+#         {
+#             "option": "plotly_resampler",
+#             "input_type": "default",
+#         },
+#         {
+#             "option": "sdsl4py",
+#             "input_type": "sdsl4py",
+#         }
+#     ]
+#     n_range = list(range(10000, 350000, 10000))
