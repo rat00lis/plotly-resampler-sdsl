@@ -20,5 +20,5 @@ def run(cases, iterations, n_range, file_input_list, decimal_places):
         return ElapsedTime.elapsed_time
 
     results = run_with_timing(input_tools_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations)
-    exp.log_scalar("num_cases", len(results))
+    # exp.log_scalar("num_cases", len(results))
     return results
