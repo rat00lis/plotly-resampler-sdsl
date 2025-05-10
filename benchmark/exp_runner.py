@@ -21,23 +21,6 @@ def setup_experiment(exp_name, config_overrides=None):
             "input_type": "sdsl4py",
         }
         ]
-        n_range = [
-            2000, 
-            5000, 
-            10000,
-            50000,
-            100000,
-            500000,
-            1000000,
-            5000000,
-            10000000,
-            50000000,
-            100000000,
-            500000000,
-            1000000000,
-            5000000000,
-            10000000000
-        ] 
     return exp
 
 def run_with_timing(input_tools_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations):
@@ -71,6 +54,7 @@ def run_with_timing(input_tools_instance, experiment_fn, cases, n_range, file_in
                     "stdev": statistics.stdev(timings) if len(timings) > 1 else 0,
                     "min": min(timings),
                     "max": max(timings),
-                    "all_times": timings
+                    "all_times": timings,
+                    "iterations": iterations
                 }
     return results
