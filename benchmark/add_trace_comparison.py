@@ -4,8 +4,26 @@ from data_structures import input_tools
 from plotly_resampler.figure_resampler.figurewidget_resampler import FigureWidgetResampler
 import plotly.graph_objects as go
 
-exp_name = "downsampling_comparison"
+exp_name = "add_trace_comparison"
 exp = setup_experiment(exp_name)
+
+# Override default config
+@exp.config
+def default_config():
+    cases = [
+        {
+            "option": "plotly",
+            "input_type": "default",
+        },
+        {
+            "option": "plotly_resampler_sdsl4py",
+            "input_type": "sdsl4py",
+        },
+        {
+            "option": "plotly_resampler",
+            "input_type": "default",
+        }
+    ]
 
 @exp.automain
 def run(cases, iterations, n_range, file_input_list, decimal_places):
@@ -26,5 +44,6 @@ def run(cases, iterations, n_range, file_input_list, decimal_places):
         return end - start
 
     results = run_with_timing(input_tools_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations)
-    exp.log_scalar("num_cases", len(results))
+    # exp.log_scalar("num_cases", len(results))
     return results
+
