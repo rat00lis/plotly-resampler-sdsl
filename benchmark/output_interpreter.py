@@ -2,14 +2,15 @@ import csv
 import os
 import json
 import pandas as pd
-import plotly.express as px  # Use Plotly Express for plotting
+import plotly.express as px
+import argparse  # Add argparse for command-line arguments
 
 file_path_root = "benchmark/output/"
 # Dynamically get all experiment names from subdirectories
 exp_names = [d for d in os.listdir(file_path_root) if os.path.isdir(os.path.join(file_path_root, d))]
 print(f"Found experiments: {exp_names}")
 
-def run_all_experiments():
+def run_all_experiments(file_path_root=file_path_root, exp_names=exp_names):
     for exp_name in exp_names:
         # Get the experiment directory
         exp_dir = os.path.join(file_path_root, exp_name)
@@ -38,6 +39,8 @@ def run_all_experiments():
             plot_experiment_results(exp_results, exp_name, os.path.join(exp_dir, latest_folder, "plot.png"))
         else:
             print(f"File {file_path} does not exist.")
+
+# Rest of the functions remain the same...
 
 def get_json_from_file(file_path):
     with open(file_path, 'r') as file:
@@ -151,4 +154,14 @@ def plot_experiment_results(results_dict, exp_name, file_path, include_stdev=Fal
     
     fig_log.write_image(log_file_path)  # Save the log plot as a PNG file
 
-run_all_experiments()
+if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Process experiment results')
+    parser.add_argument('-Exp', '--experiments', nargs='+', help='List of experiments to process')
+    args = parser.parse_args()
+    
+    # If experiments are specified, use them, otherwise use all experiments
+    selected_experiments = args.experiments if args.experiments else exp_names
+    print(f"Processing experiments: {selected_experiments}")
+    
+    run_all_experiments(file_path_root=file_path_root, exp_names=selected_experiments)
