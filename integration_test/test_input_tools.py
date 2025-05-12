@@ -1,65 +1,102 @@
 import pytest
 import numpy as np
-from data_structures.input_tools import InputTools
+from benchmark.input_handler import InputHandler
+
+#create file
+file_name = "integration_test/test_input/test_input_tools.txt"
 
 @pytest.fixture
-def input_tools():
-    return InputTools()
+def input_handler():
+    #write csv file as [0] = 1...1000, and [1] = 999...0
+    with open(file_name, "w") as file:
+        for i in range(1000):
+            file.write(f"{i};{999-i}\n")
 
-def test_default_normal(input_tools):
-    size = 1000
-    x, y = input_tools.get(input_type="default", option="normal", size=size)
+    return InputHandler()
+
+def verify_values_are_the_same(original_x, original_y, ih_x, ih_y):
+    #assert the values are the same
+    assert np.array_equal(original_x, ih_x), f"Expected {original_x} but got {ih_x}"
+    assert np.array_equal(original_y, ih_y), f"Expected {original_y} but got {ih_y}"
+
+
+def test_normal_option(input_handler):
+    #get the values from a file to a vector without the tool
+    or_vec_x, or_vec_y = np.loadtxt(file_name, delimiter=";", unpack=True)
     
-    assert len(x) == size
-    assert len(y) == size
-    assert isinstance(y, np.ndarray)
-    assert np.all(x == np.linspace(0, 4 * np.pi, size))
-    assert isinstance(y[0], np.float64)
-
-def test_default_sdsl4py(input_tools):
-    size = 1000
-    x, vector = input_tools.get(input_type="default", option="sdsl4py", size=size)
+    #get the values from a file to a vector with the tool
+    ih_vector_x, ih_vector_y = input_handler.get_from_file( 
+        file_path=file_name,
+        option = "default",
+        decimal_places= 0, 
+        delimiter=";", 
+        column=1, 
+        truncate=None
+    )
     
-    assert len(x) == size 
-    assert len(vector) == size
-    assert hasattr(vector, 'build_from_vector')
-    assert np.all(x == np.linspace(0, 4 * np.pi, size))
+    #assert the values are the same
+    verify_values_are_the_same(or_vec_x, or_vec_y, ih_vector_x, ih_vector_y)
 
-def test_invalid_input_type(input_tools):
-    with pytest.raises(Exception):
-        input_tools.get(input_type="invalid")
+def test_sdsl4py_option_with_64_width(input_handler):
+    or_vec_x, or_vec_y = np.loadtxt(file_name, delimiter=";", unpack=True)
+    # sdsl4py case
+    ih_vector_x, ih_vector_y = input_handler.get_from_file( 
+        file_path=file_name,
+        option = "sdsl4py",
+        decimal_places= 0, 
+        delimiter=";", 
+        column=1, 
+        truncate=None
+    )
 
-def test_custom_size(input_tools):
-    size = 500
-    x, y = input_tools.get(size=size)
-    assert len(x) == size
-    assert len(y) == size
+    input_handler.set_width(64)
+    #assert the values are the same
+    verify_values_are_the_same(or_vec_x, or_vec_y, ih_vector_x, ih_vector_y)
 
-def test_output_shapes_match(input_tools):
-    size = 1000
-    x, y = input_tools.get(size=size)
-    assert x.shape == y.shape
+def test_sdsl4py_option_with_32_width(input_handler):
+    or_vec_x, or_vec_y = np.loadtxt(file_name, delimiter=";", unpack=True)
+    # sdsl4py case
+    ih_vector_x, ih_vector_y = input_handler.get_from_file( 
+        file_path=file_name,
+        option = "sdsl4py",
+        decimal_places= 0, 
+        delimiter=";", 
+        column=1, 
+        truncate=None
+    )
 
-def test_x_values_monotonic(input_tools):
-    x, _ = input_tools.get()
-    assert np.all(np.diff(x) > 0)
+    input_handler.set_width(32)
+    #assert the values are the same
+    verify_values_are_the_same(or_vec_x, or_vec_y, ih_vector_x, ih_vector_y)
 
-def test_get_from_file(input_tools):
-    # Create a temporary CSV file for testing
-    test_file_path = 'test_data.csv'
-    with open(test_file_path, 'w') as f:
-        f.write("0,1\n")
-        f.write("1,2\n")
-        f.write("2,3\n")
+def test_sdsl4py_option_with_16_width(input_handler):
+    or_vec_x, or_vec_y = np.loadtxt(file_name, delimiter=";", unpack=True)
+    # sdsl4py case
+    ih_vector_x, ih_vector_y = input_handler.get_from_file( 
+        file_path=file_name,
+        option = "sdsl4py",
+        decimal_places= 0, 
+        delimiter=";", 
+        column=1, 
+        truncate=None
+    )
 
-    # Test the function
-    x, y = input_tools.get_from_file(test_file_path, option="default", column=1, delimiter=",")
+    input_handler.set_width(16)
+    #assert the values are the same
+    verify_values_are_the_same(or_vec_x, or_vec_y, ih_vector_x, ih_vector_y)
 
-    assert len(x) == 3
-    assert len(y) == 3
-    assert np.all(x == np.array([0, 1, 2]))
-    assert np.all(y == np.array([1, 2, 3]))
+def test_sdsl4py_option_with_8_width(input_handler):
+    or_vec_x, or_vec_y = np.loadtxt(file_name, delimiter=";", unpack=True)
+    # sdsl4py case
+    ih_vector_x, ih_vector_y = input_handler.get_from_file( 
+        file_path=file_name,
+        option = "sdsl4py",
+        decimal_places= 0, 
+        delimiter=";", 
+        column=1, 
+        truncate=None
+    )
 
-    # Clean up the temporary file
-    import os
-    os.remove(test_file_path)
+    input_handler.set_width(8)
+    #assert the values are the same
+    verify_values_are_the_same(or_vec_x, or_vec_y, ih_vector_x, ih_vector_y)

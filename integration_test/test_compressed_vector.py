@@ -2,12 +2,13 @@ import pytest
 from data_structures.compressed_vector import CompressedVector
 import sdsl4py
 
-
-@pytest.fixture
-def original_vector_and_decimal_places():
-    # Input data
-    original_vector = [1234.5678, 0.00012345, 98765.4321, 42.0, 0.99999999]
-    decimal_places = 8
+def get_original_vector_and_decimal_places(width):
+    if width <= 16:
+        original_vector = [-12.56, 0.01, 98.43, -42.0, 0.99]
+        decimal_places = 2
+    else:
+        original_vector = [1234.5678, 0.00012345, 98765.4321, 42.0, 0.99999999]
+        decimal_places = 8
     return original_vector, decimal_places
 
 
@@ -29,34 +30,45 @@ def verify_compressed_vector(original_vector, decimal_places, compressed_vector)
         print(f"Value: {value}")
 
 
-def test_default_compressed_vector(original_vector_and_decimal_places):
-    original_vector, decimal_places = original_vector_and_decimal_places
+def test_int_vector_64():
+    original_vector, decimal_places = get_original_vector_and_decimal_places(64)
     # Create the compressed vector
-    cv = CompressedVector()
-    cv.build_from_vector(original_vector, decimal_places=decimal_places)
+    cv = CompressedVector(decimal_places, 64)
+    cv.create_vector(len(original_vector))
+    cv.fill_from_vector(original_vector)
     verify_compressed_vector(original_vector, decimal_places, cv)
 
+    assert type(cv.integer_part) == sdsl4py.int_vector_64, "Compressed vector should be of type int_vector_64"
 
-def test_enc_compressed_vector(original_vector_and_decimal_places):
-    original_vector, decimal_places = original_vector_and_decimal_places
-    cv = CompressedVector()
-    cv.set_int_part_structure(sdsl4py.enc_vector_elias_delta)
-    cv.set_dec_part_structure(sdsl4py.enc_vector_elias_delta)
-    cv.build_from_vector(original_vector, decimal_places=decimal_places)
+
+def test_int_vector_32():
+    original_vector, decimal_places = get_original_vector_and_decimal_places(32)
+    # Create the compressed vector
+    cv = CompressedVector(decimal_places, 32)
+    cv.create_vector(len(original_vector))
+    cv.fill_from_vector(original_vector)
     verify_compressed_vector(original_vector, decimal_places, cv)
 
-def test_vlc_compressed_vector(original_vector_and_decimal_places):
-    original_vector, decimal_places = original_vector_and_decimal_places
-    cv = CompressedVector()
-    cv.set_int_part_structure(sdsl4py.vlc_vector_elias_delta)
-    cv.set_dec_part_structure(sdsl4py.vlc_vector_elias_delta)
-    cv.build_from_vector(original_vector, decimal_places=decimal_places)
+    assert type(cv.integer_part) == sdsl4py.int_vector_32, "Compressed vector should be of type int_vector_32"
+
+
+def test_int_vector_16():
+    original_vector, decimal_places = get_original_vector_and_decimal_places(16)
+    # Create the compressed vector
+    cv = CompressedVector(decimal_places, 16)
+    cv.create_vector(len(original_vector))
+    cv.fill_from_vector(original_vector)
     verify_compressed_vector(original_vector, decimal_places, cv)
 
-def test_dac_compressed_vector(original_vector_and_decimal_places):
-    original_vector, decimal_places = original_vector_and_decimal_places
-    cv = CompressedVector()
-    cv.set_int_part_structure(sdsl4py.dac_vector)
-    cv.set_dec_part_structure(sdsl4py.dac_vector)
-    cv.build_from_vector(original_vector, decimal_places=decimal_places)
+    assert type(cv.integer_part) == sdsl4py.int_vector_16, "Compressed vector should be of type int_vector_16"
+
+
+def test_int_vector_8():
+    original_vector, decimal_places = get_original_vector_and_decimal_places(8)
+    # Create the compressed vector
+    cv = CompressedVector(decimal_places, 8)
+    cv.create_vector(len(original_vector))
+    cv.fill_from_vector(original_vector)
     verify_compressed_vector(original_vector, decimal_places, cv)
+
+    assert type(cv.integer_part) == sdsl4py.int_vector_8, "Compressed vector should be of type int_vector_8"
