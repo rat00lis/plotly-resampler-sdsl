@@ -1,7 +1,7 @@
 import time
 import memory_profiler
 from benchmark.exp_runner import setup_experiment, run_with_timing
-from data_structures import input_tools
+from benchmark.input_handler import InputHandler
 from plotly_resampler.figure_resampler.figurewidget_resampler import FigureWidgetResampler
 import plotly.graph_objects as go
 
@@ -25,13 +25,10 @@ def default_config():
             "input_type": "default",
         }
     ]
-    # These values (n_range) might be used to generate test data for the graph
-    n_range = [100, 500, 1000, 5000, 10000]
-    iterations = 10
 
 @exp.automain
 def run(cases, iterations, n_range, file_input_list, decimal_places):
-    input_tools_instance = input_tools.InputTools()
+    input_handler_instance = InputHandler()
 
     def experiment_fn(x, y, option):
         # Measure memory before adding the trace
@@ -56,6 +53,6 @@ def run(cases, iterations, n_range, file_input_list, decimal_places):
 
     # Run the experiment using your existing experiment runner.
     results = run_with_timing(
-        input_tools_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations
+        input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations
     )
     return results
