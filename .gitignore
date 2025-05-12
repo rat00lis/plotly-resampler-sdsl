@@ -5,7 +5,9 @@ testing/
 externals/
 input/
 htmls/
-
+benchmark/output/
+integration_test/test_input/
+# --------------------
 venv*
 .cache_datasets/
 *.ruff*
