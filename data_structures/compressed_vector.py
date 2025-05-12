@@ -7,6 +7,7 @@ class CompressedVector:
         self,
         decimal_places=0,
         int_width=64,
+        dtype=float
     ):
         """
         Initialize the CompressedVector with default values.
@@ -35,11 +36,11 @@ class CompressedVector:
             return value
         raise StopIteration
     
-    def __array__(self, dtype=None, copy=True):
-        array = np.empty(self.n_elements, dtype=dtype or float)
-        for i in range(self.n_elements):
-            array[i] = self._reconstruct_float_value(i)
-        return array.copy() if copy else array
+    # def __array__(self, dtype=None, copy=True):
+    #     array = np.empty(self.n_elements, dtype=dtype or float)
+    #     for i in range(self.n_elements):
+    #         array[i] = self._reconstruct_float_value(i)
+    #     return array.copy() if copy else array
     
     def __len__(self):
         """
@@ -48,22 +49,52 @@ class CompressedVector:
         return self.n_elements
     
     def __getitem__(self, index):
-        """
-        Return the value at the given index.
-        """
-        # Handle get the value at the specified index
         if isinstance(index, int):
-            if index < 0 or index >= self.n_elements:  # Check for out of range
-                raise IndexError("Index out of range")
+            if index < 0 or index >= self.n_elements:
+                reverse_index = self.n_elements + index
+                if reverse_index < 0:
+                    raise IndexError("Index out of range")
+                index = reverse_index
             return self._reconstruct_float_value(index)
 
-        # Handle slicing
+        # elif isinstance(index, slice):
+        #     start, stop, step = index.indices(self.n_elements)
+        #     sliced_values = [self._reconstruct_float_value(i) for i in range(start, stop, step)]
+        #     result = CompressedVector(self.decimal_places, self.int_width, dtype=self.dtype)
+        #     result.create_vector(len(sliced_values))
+        #     result.fill_from_vector(sliced_values)
+        #     return result
+
+        elif isinstance(index, (list, np.ndarray)):
+            # return np array
+            int_arr = np.asarray(self.integer_part)
+            dec_arr = np.asarray(self.decimal_part)
+            sign_arr = np.asarray(self.sign_part)
+
+            denom = 10 ** self.decimal_places
+            selected = np.array(indices)
+
+            float_arr = int_arr[selected] + dec_arr[selected] / denom
+            float_arr[sign_arr[selected] == 0] *= -1
+            return float_arr
+        
         elif isinstance(index, slice):
             start, stop, step = index.indices(self.n_elements)
-            return [self._reconstruct_float_value(i) for i in range(start, stop, step)]
+            indices = range(start, stop, step)
+            int_arr = np.asarray(self.integer_part)
+            dec_arr = np.asarray(self.decimal_part)
+            sign_arr = np.asarray(self.sign_part)
+
+            denom = 10 ** self.decimal_places
+            selected = np.array(indices)
+
+            float_arr = int_arr[selected] + dec_arr[selected] / denom
+            float_arr[sign_arr[selected] == 0] *= -1
+            return float_arr
 
         else:
-            raise TypeError("Invalid index type")
+            raise TypeError(f"Invalid index type: {type(index)}. Expected int, slice, list or ndarray.")
+
 
     def __setitem__(self, index, value):
         """
@@ -159,7 +190,7 @@ class CompressedVector:
     def size_in_bytes(self):
         """
         Return the size in bytes of the compressed vector.
-        """
+        """ 
         total = (
                 # sdsl4py vectors
                 sdsl4py.size_in_bytes(self.integer_part) 
@@ -199,4 +230,21 @@ class CompressedVector:
         )
         return value if self.sign_part[index] == 1 else -value  # sign part
     
+    @property
+    def dtype(self):
+        """
+        Return the data type of the compressed vector.
+        """
+        return np.dtype(float)
     
+    @property
+    def ndim(self):
+        return 1
+
+    @property
+    def shape(self):
+        return (self.n_elements,)
+    
+    @property
+    def size(self):
+        return self.n_elements
