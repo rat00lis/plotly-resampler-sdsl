@@ -27,8 +27,7 @@ from ..aggregation import AbstractAggregator, MedDiffGapHandler, MinMaxLTTB
 from ..aggregation.aggregation_interface import DataPointSelector
 from ..aggregation.gap_handler_interface import AbstractGapHandler
 from ..aggregation.plotly_aggregator_parser import PlotlyAggregatorParser
-from .utils import round_number_str, round_td_str
-
+from .utils import round_number_str, round_td_str, is_compressed_vector_instance
 # A high-frequency data container
 # NOTE: the attributes must all be valid trace attributes, with attribute levels
 # separated by an '_' (e.g., 'marker_color' is valid) as the
@@ -587,9 +586,8 @@ class AbstractFigureAggregator(BaseFigure, ABC):
             # datetime64 arrays to an pd.Index
             else pd.Index(hf_x) if pd.core.dtypes.common.is_datetime64_any_dtype(hf_x)
             else hf_x.values if isinstance(hf_x, pd.Series)
-            else hf_x if isinstance(hf_x, pd.Index)
-            else np.asarray(hf_x)
-            # fmt: on
+            else hf_x if isinstance(hf_x, pd.Index) or is_compressed_vector_instance(hf_x)
+            else np.asarray(hf_x)  # if hf_x is a list or tuple
         )
         if pd.core.dtypes.common.is_datetime64_any_dtype(hf_x):
             hf_x = pd.Index(hf_x)

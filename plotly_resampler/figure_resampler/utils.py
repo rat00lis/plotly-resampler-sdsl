@@ -1,7 +1,7 @@
 """Utility functions for the figure_resampler submodule."""
 
 import math
-
+from data_structures.compressed_vector import CompressedVector
 import pandas as pd
 from plotly.basedatatypes import BaseFigure
 
@@ -14,6 +14,20 @@ from typing import Any
 
 ### Checks for the figure type
 
+def is_compressed_vector_instance(vector: Any) -> bool:
+    """Check if the vector is an instance of sdsl4py.
+
+    Parameters
+    ----------
+    vector : Any
+        The vector to check.
+
+    Returns
+    -------
+    bool
+        True if the vector is an instance of sdsl4py.
+    """
+    return isinstance(vector, CompressedVector)
 
 def is_figure(figure: Any) -> bool:
     """Check if the figure is a plotly go.Figure or a FigureResampler.
