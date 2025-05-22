@@ -7,6 +7,7 @@ __author__ = "Jonas Van Der Donckt"
 import re
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
+
 import numpy as np
 
 
@@ -54,8 +55,7 @@ class AbstractAggregator(ABC):
     @staticmethod
     def _check_arr(arr: np.ndarray, regex_list: Optional[List[str]] = None):
         """Check if the array is valid."""
-        from ..figure_resampler.utils import is_compressed_vector_instance
-        assert (isinstance(arr, np.ndarray) or is_compressed_vector_instance(arr)), f"Expected np.ndarray, got {type(arr)}"
+        assert isinstance(arr, np.ndarray), f"Expected np.ndarray, got {type(arr)}"
         assert arr.ndim == 1
         AbstractAggregator._supports_dtype(arr, regex_list)
 
