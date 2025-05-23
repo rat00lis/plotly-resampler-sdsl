@@ -65,7 +65,7 @@ class CompressedVector:
         #     result.fill_from_vector(sliced_values)
         #     return result
 
-        elif isinstance(index, (list, np.ndarray)):
+        elif isinstance(index, (list, np.ndarray, tuple)):
             # return np array
             int_arr = np.asarray(self.integer_part)
             dec_arr = np.asarray(self.decimal_part)
@@ -115,6 +115,16 @@ class CompressedVector:
             index (int): The index to insert the value at.
             value (float): The value to insert.
         """
+        # Check for NaN values
+        if math.isnan(value):
+            # Choose how to represent NaN in your compressed format
+            # Option 1: Use a special value combination
+            self.integer_part[index] = 0
+            self.decimal_part[index] = 0
+            self.sign_part[index] = 2  # Special code for NaN (not 0 or 1)
+            return
+            
+        # Original code for normal values
         int_part = int(abs(value))
         dec_part = abs(value) - int_part
         dec_part = round(dec_part, self.decimal_places)
@@ -224,6 +234,8 @@ class CompressedVector:
         Returns:
             float: Reconstructed value with correct sign
         """
+        if self.sign_part[index] == 2:
+            return float('nan')
         value = (
             self.integer_part[index]  # integer part
             + self.decimal_part[index] / (10 ** self.decimal_places)  # decimal part
