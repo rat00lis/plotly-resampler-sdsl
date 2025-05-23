@@ -6,18 +6,28 @@ import csv
 class InputHandler:
     def __init__(self):
         self.valid_input_types = ["default", "sdsl4py"]
-        self.width = 64
+        self.width_y = 64
+        self.width_x = 64
 
-    def set_width(self, width):
+    def set_width(self, width, axis="x"):
         """
             Set the width of the integer part in bits.
             Args:
                 width (int): The width of the integer part in bits. Only 8, 16, 32, or 64 are valid.
+                axis (str): The axis to set the width for. Can be "x" or "y".
         """
-        if width in [8, 16, 32, 64]:
-            self.width = width
+        if axis == "x":
+            if width in [8, 16, 32, 64]:
+                self.width_x = width
+            else:
+                raise ValueError(f"Invalid width for x: {width}. Valid widths are: 8, 16, 32, 64")
+        elif axis == "y":
+            if width in [8, 16, 32, 64]:
+                self.width_y = width
+            else:
+                raise ValueError(f"Invalid width for y: {width}. Valid widths are: 8, 16, 32, 64")
         else:
-            raise ValueError("Width must be one of the following: 8, 16, 32, or 64.")
+            raise ValueError(f"Invalid axis: {axis}. Valid axes are: x, y")
         
     def get_from_file(
             self, 
@@ -56,10 +66,10 @@ class InputHandler:
         
         elif option == "sdsl4py":
             # create the compressed vector
-            compressed_vector_instance_x = compressed_vector.CompressedVector(decimal_places, self.width)
+            compressed_vector_instance_x = compressed_vector.CompressedVector(decimal_places, self.width_x)
             compressed_vector_instance_x.create_vector(len(x))
             compressed_vector_instance_x.fill_from_vector(x)
-            compressed_vector_instance_y = compressed_vector.CompressedVector(decimal_places, self.width)
+            compressed_vector_instance_y = compressed_vector.CompressedVector(decimal_places, self.width_y)
             compressed_vector_instance_y.create_vector(len(y))
             compressed_vector_instance_y.fill_from_vector(y)
             # return the compressed vector

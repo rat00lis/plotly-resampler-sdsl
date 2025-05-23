@@ -26,7 +26,7 @@ def default_config():
     ]
 
 @exp.automain
-def run(cases, iterations, n_range, file_input_list, decimal_places):
+def run(cases, iterations, n_range, file_input_list, decimal_places, width):
     input_handler_instance = InputHandler()
 
     def experiment_fn(x, y, option):
@@ -35,15 +35,17 @@ def run(cases, iterations, n_range, file_input_list, decimal_places):
             start = time.perf_counter()
             figure.add_trace(go.Scattergl(x=x, y=y, name=option, showlegend=True))
             end = time.perf_counter()
+            del figure
             return end - start
         
         figure = FigureWidgetResampler(go.Figure())
         start = time.perf_counter()
         figure.add_trace(go.Scattergl(name=option, showlegend=True), hf_x=x, hf_y=y)
         end = time.perf_counter()
+        del figure
         return end - start
 
-    results = run_with_timing(input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations)
+    results = run_with_timing(input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations, width)
     # exp.log_scalar("num_cases", len(results))
     return results
 

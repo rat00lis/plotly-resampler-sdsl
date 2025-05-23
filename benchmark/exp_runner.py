@@ -3,7 +3,7 @@ from benchmark.input_handler import InputHandler
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
 from benchmark.config import add_base_config, ROOT_OUTPUT_FOLDER
-
+from data_structures.compressed_vector import CompressedVector
 def setup_experiment(exp_name, config_overrides=None):
     exp = Experiment(exp_name)
     exp.observers.append(FileStorageObserver.create(ROOT_OUTPUT_FOLDER + "/" + exp_name))
@@ -23,7 +23,7 @@ def setup_experiment(exp_name, config_overrides=None):
         ]
     return exp
 
-def run_with_timing(input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations):
+def run_with_timing(input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations, width):
     results = {}
 
     for file_input in file_input_list:
@@ -31,6 +31,7 @@ def run_with_timing(input_handler_instance, experiment_fn, cases, n_range, file_
             for case in cases:
                 option = case["option"]
                 input_type = case["input_type"]
+                input_handler_instance.set_width(width, "y")
                 x, y = input_handler_instance.get_from_file(
                     file_path = file_input,
                     option = input_type,
@@ -47,7 +48,14 @@ def run_with_timing(input_handler_instance, experiment_fn, cases, n_range, file_
                 timings = []
                 for _ in range(iterations):
                     timings.append(experiment_fn(x, y, option))
-
+                if isinstance(x, CompressedVector):
+                    x.destroy()
+                else:
+                    x = None
+                if isinstance(y, CompressedVector):
+                    y.destroy()
+                else:
+                    y = None
                 clean_file_input = file_input.split("/")[-1].split(".")[0]
                 key = f"{clean_file_input}_{n_size}_{option}"
 
@@ -64,7 +72,7 @@ def run_with_timing(input_handler_instance, experiment_fn, cases, n_range, file_
                 }
     return results
 
-def run_with_memory(input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations):
+def run_with_memory(input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations, width):
     results = {}
 
     for file_input in file_input_list:
