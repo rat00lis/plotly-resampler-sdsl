@@ -7,7 +7,8 @@ class CompressedVector:
         self,
         decimal_places=0,
         int_width=64,
-        dtype=float
+        dtype=float,
+        get_decompressed = True
     ):
         """
         Initialize the CompressedVector with default values.
@@ -24,6 +25,7 @@ class CompressedVector:
         self.int_width = int_width
         self.current = 0
         self.n_elements = 0
+        self.get_decompressed = get_decompressed
 
     def __iter__(self):
         self.current = 0  # Reset the current index for iteration
@@ -35,13 +37,7 @@ class CompressedVector:
             self.current += 1
             return value
         raise StopIteration
-    
-    # def __array__(self, dtype=None, copy=True):
-    #     array = np.empty(self.n_elements, dtype=dtype or float)
-    #     for i in range(self.n_elements):
-    #         array[i] = self._reconstruct_float_value(i)
-    #     return array.copy() if copy else array
-    
+
     def __len__(self):
         """
         Return the number of elements in the compressed vector.
@@ -57,43 +53,38 @@ class CompressedVector:
                 index = reverse_index
             return self._reconstruct_float_value(index)
 
-        # elif isinstance(index, slice):
-        #     start, stop, step = index.indices(self.n_elements)
-        #     sliced_values = [self._reconstruct_float_value(i) for i in range(start, stop, step)]
-        #     result = CompressedVector(self.decimal_places, self.int_width, dtype=self.dtype)
-        #     result.create_vector(len(sliced_values))
-        #     result.fill_from_vector(sliced_values)
-        #     return result
+        elif isinstance(index, (slice, list, np.ndarray, tuple)):
+            # Expand slice to a list of indices
+            if self.get_decompressed:
+                if isinstance(index, slice):
+                    index = range(*index.indices(self.n_elements))
+                
+                selected = np.array(index)
+                int_arr = np.asarray(self.integer_part)
+                dec_arr = np.asarray(self.decimal_part)
+                sign_arr = np.asarray(self.sign_part)
 
-        elif isinstance(index, (list, np.ndarray, tuple)):
-            # return np array
-            int_arr = np.asarray(self.integer_part)
-            dec_arr = np.asarray(self.decimal_part)
-            sign_arr = np.asarray(self.sign_part)
-
-            denom = 10 ** self.decimal_places
-            selected = np.array(indices)
-
-            float_arr = int_arr[selected] + dec_arr[selected] / denom
-            float_arr[sign_arr[selected] == 0] *= -1
-            return float_arr
-        
-        elif isinstance(index, slice):
-            start, stop, step = index.indices(self.n_elements)
-            indices = range(start, stop, step)
-            int_arr = np.asarray(self.integer_part)
-            dec_arr = np.asarray(self.decimal_part)
-            sign_arr = np.asarray(self.sign_part)
-
-            denom = 10 ** self.decimal_places
-            selected = np.array(indices)
-
-            float_arr = int_arr[selected] + dec_arr[selected] / denom
-            float_arr[sign_arr[selected] == 0] *= -1
-            return float_arr
+                denom = 10 ** self.decimal_places
+                float_arr = int_arr[selected] + dec_arr[selected] / denom
+                float_arr[sign_arr[selected] == 0] *= -1
+                return float_arr
+            
+            else:
+                new_vector = CompressedVector(
+                    decimal_places=self.decimal_places,
+                    int_width=self.int_width,
+                    get_decompressed=False
+                )
+                len_index = len(index) if isinstance(index, (list, np.ndarray, tuple)) else index.stop - index.start
+                new_vector.create_vector(len_index)
+                index_start = index.start if isinstance(index, slice) else index[0]
+                index_stop = index.stop if isinstance(index, slice) else index[-1] + 1
+                new_vector.fill_from_vector(self, start=index_start, end=index_stop)
+                return new_vector
 
         else:
             raise TypeError(f"Invalid index type: {type(index)}. Expected int, slice, list or ndarray.")
+
 
 
     def __setitem__(self, index, value):
@@ -134,8 +125,14 @@ class CompressedVector:
         self.decimal_part[index] = dec_part
         self.sign_part[index] = sign_part
 
+    def set_decompressed_config(self, get_decompressed):
+        """
+        Set the configuration for decompression.
+        Args:
+            get_decompressed (bool): Whether to return decompressed values.
+        """
+        self.get_decompressed = get_decompressed
 
-    
     def create_vector(self, size):
         """
         Create the integer and decimal vectors.
@@ -155,18 +152,31 @@ class CompressedVector:
                 self._create_vector(sdsl4py.int_vector_64)
 
     
-    def fill_from_vector(self, original_vector):
+    def fill_from_vector(self, original_vector, start=0, end=None):
         """
         Build the compressed vector from a vector.
         Args:
             original_vector (list): The original vector to fill the compressed vector with.
+            start (int): The start index in the original vector (inclusive).
+            end (int): The end index in the original vector (exclusive). If None, use the length of the vector.
         """
         if self.integer_part is None or self.decimal_part is None or self.sign_part is None:
             raise ValueError("Vectors not created. Call create_vector() first.")
-        for value in original_vector:
+        
+        # Handle default end value and validate indices
+        if end is None:
+            end = len(original_vector)
+        elif end > len(original_vector):
+            end = len(original_vector)
+        
+        # Ensure start is valid
+        start = max(0, start)
+        
+        for i in range(start, end):
             self.current += 1
-            self._insert_value(self.current-1, value)
-        self.n_elements = len(original_vector)
+            self._insert_value(self.current - 1, original_vector[i])
+                
+        self.n_elements = (end - start)
         self.current = 0
 
     def fill_from_file(self, file_path, column=1, delimiter=";", truncate=None):

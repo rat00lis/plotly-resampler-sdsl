@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 from data_structures.compressed_vector import CompressedVector
 import sdsl4py
 
@@ -72,3 +73,104 @@ def test_int_vector_8():
     verify_compressed_vector(original_vector, decimal_places, cv)
 
     assert type(cv.integer_part) == sdsl4py.int_vector_8, "Compressed vector should be of type int_vector_8"
+
+def test_get_decompressed():
+    original_vector, decimal_places = get_original_vector_and_decimal_places(64)
+    # Create the compressed vector
+    cv = CompressedVector(decimal_places, 64)
+    cv.create_vector(len(original_vector))
+    cv.fill_from_vector(original_vector)
+
+    # Set decompression configuration
+    cv.set_decompressed_config(True)
+
+    # Verify that the decompressed values match the original values
+    for i, value in enumerate(cv):
+        assert round(value, decimal_places) == round(original_vector[i], decimal_places), \
+            f"Decompressed value {value} does not match original {original_vector[i]}"
+        
+    # Also verify slice, tuple, and list as get parameters
+    # when accesing with index random
+    import random
+    random_index = random.randint(0, len(original_vector) - 1)
+    assert round(cv[random_index], decimal_places) == round(original_vector[random_index], decimal_places), \
+        f"Decompressed value {cv[random_index]} does not match original {original_vector[random_index]}"
+    
+    # when accessing with slice
+    start_index = 0
+    end_index = 3
+    sliced_values = original_vector[start_index:end_index]
+    cv_sliced_values = cv[start_index:end_index]
+    for i in range(start_index, end_index):
+        assert round(cv_sliced_values[i - start_index], decimal_places) == round(sliced_values[i], decimal_places), \
+            f"Decompressed value {cv_sliced_values[i - start_index]} does not match original {sliced_values[i]}"
+        
+    # when accessing with tuple
+    indices_tuple = (0, 1, 2)
+    cv_tuple_values = cv[indices_tuple]
+    # original_tuple_values = original_vector[indices_tuple]
+    original_as_numpy = np.asarray(original_vector)
+    original_tuple_values = original_as_numpy[list(indices_tuple)]  # Convert tuple to list for numpy indexing
+    for i in range(len(indices_tuple)):
+        assert round(cv_tuple_values[i], decimal_places) == round(original_tuple_values[i], decimal_places), \
+            f"Decompressed value {cv_tuple_values[i]} does not match original {original_tuple_values[i]}"
+
+    # when accessing with list
+    indices_list = [0, 1, 2]
+    cv_list_values = cv[indices_list]
+    original_as_numpy = np.asarray(original_vector)
+    original_list_values = original_as_numpy[list(indices_list)]  # Convert to list for numpy indexing
+    for i, index in enumerate(indices_list):
+        assert round(cv_list_values[i], decimal_places) == round(original_list_values[index], decimal_places), \
+            f"Decompressed value {cv_list_values[i]} does not match original {original_list_values[index]}"
+        
+
+def test_get_compressed():
+    original_vector, decimal_places = get_original_vector_and_decimal_places(64)
+    # Create the compressed vector
+    cv = CompressedVector(decimal_places, 64)
+    cv.create_vector(len(original_vector))
+    cv.fill_from_vector(original_vector)
+
+    # Set decompression configuration to False
+    cv.set_decompressed_config(False)
+
+    # Verify that the decompressed values match the original values
+    for i, value in enumerate(cv):
+        assert round(value, decimal_places) == round(original_vector[i], decimal_places), \
+            f"Decompressed value {value} does not match original {original_vector[i]}"
+        
+    # Also verify slice, tuple, and list as get parameters
+    # when accesing with index random
+    import random
+    random_index = random.randint(0, len(original_vector) - 1)
+    assert round(cv[random_index], decimal_places) == round(original_vector[random_index], decimal_places), \
+        f"Decompressed value {cv[random_index]} does not match original {original_vector[random_index]}"
+    
+    # when accessing with slice
+    start_index = 0
+    end_index = 3
+    sliced_values = original_vector[start_index:end_index]
+    cv_sliced_values = cv[start_index:end_index]
+    for i in range(start_index, end_index):
+        assert round(cv_sliced_values[i - start_index], decimal_places) == round(sliced_values[i], decimal_places), \
+            f"Decompressed value {cv_sliced_values[i - start_index]} does not match original {sliced_values[i]}"
+        
+    # when accessing with tuple
+    indices_tuple = (0, 1, 2)
+    cv_tuple_values = cv[indices_tuple]
+    # original_tuple_values = original_vector[indices_tuple]
+    original_as_numpy = np.asarray(original_vector)
+    original_tuple_values = original_as_numpy[list(indices_tuple)]  # Convert tuple to list for numpy indexing
+    for i in range(len(indices_tuple)):
+        assert round(cv_tuple_values[i], decimal_places) == round(original_tuple_values[i], decimal_places), \
+            f"Decompressed value {cv_tuple_values[i]} does not match original {original_tuple_values[i]}"
+
+    # when accessing with list
+    indices_list = [0, 1, 2]
+    cv_list_values = cv[indices_list]
+    original_as_numpy = np.asarray(original_vector)
+    original_list_values = original_as_numpy[list(indices_list)]  # Convert to list for numpy indexing
+    for i, index in enumerate(indices_list):
+        assert round(cv_list_values[i], decimal_places) == round(original_list_values[index], decimal_places), \
+            f"Decompressed value {cv_list_values[i]} does not match original {original_list_values[index]}"
