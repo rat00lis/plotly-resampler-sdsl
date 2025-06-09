@@ -8,19 +8,6 @@ def setup_experiment(exp_name, config_overrides=None):
     exp = Experiment(exp_name)
     exp.observers.append(FileStorageObserver.create(ROOT_OUTPUT_FOLDER + "/" + exp_name))
     add_base_config(exp)
-
-    @exp.config
-    def default_config():
-        cases = [
-        {
-            "option": "plotly_resampler",
-            "input_type": "default",
-        },
-        {
-            "option": "sdsl4py",
-            "input_type": "sdsl4py",
-        }
-        ]
     return exp
 
 def run_with_timing(input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations, width):
