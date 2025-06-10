@@ -60,7 +60,10 @@ def test_memory_usage(input_handler):
     """
     Test that the memory usage of the compressed vector is less than 1 MB.
     """
-    # Get the values from a file to a vector with the tool
+    # Measure memory usage
+    tracemalloc.start()
+    snapshot1 = tracemalloc.take_snapshot()
+    
     ih_vector_x, ih_vector_y = input_handler.get_from_file(
         file_path=file_name,
         option="sdsl4py",
@@ -69,11 +72,6 @@ def test_memory_usage(input_handler):
         column=1,
         truncate=None
     )
-
-    # Measure memory usage
-    tracemalloc.start()
-    snapshot1 = tracemalloc.take_snapshot()
-    
     # Create a resampler figure and add trace
     resampler_figure = FigureWidgetResampler()
     resampler_figure.add_trace(
@@ -104,7 +102,7 @@ def test_add_trace_avg_time(input_handler):
     # Get the values from a file to a vector with the tool
     ih_vector_x, ih_vector_y = input_handler.get_from_file(
         file_path=file_name,
-        option="sdsl4py",
+        option="default",
         decimal_places=0,
         delimiter=";",
         column=1,
@@ -125,6 +123,14 @@ def test_add_trace_avg_time(input_handler):
     )
     normal_plotly_time = time.time() - start_time
 
+    ih_vector_x, ih_vector_y = input_handler.get_from_file(
+        file_path=file_name,
+        option="sdsl4py",
+        decimal_places=0,
+        delimiter=";",
+        column=1,
+        truncate=None
+    )
     # Create a resampler figure
     resampler_figure = FigureWidgetResampler(plotly_figure)
     start_time = time.time()

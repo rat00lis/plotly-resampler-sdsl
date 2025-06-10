@@ -36,7 +36,8 @@ class InputHandler:
             decimal_places=4, 
             delimiter=";", 
             column=1, 
-            truncate=None
+            truncate=None,
+            decompress=True
         ):
         """
             Get the inputs for the benchmark based on the input type and save them in input_cases.
@@ -69,9 +70,11 @@ class InputHandler:
             compressed_vector_instance_x = compressed_vector.CompressedVector(decimal_places, self.width_x)
             compressed_vector_instance_x.create_vector(len(x))
             compressed_vector_instance_x.fill_from_vector(x)
+            compressed_vector_instance_x.set_decompressed_config(decompress)
             compressed_vector_instance_y = compressed_vector.CompressedVector(decimal_places, self.width_y)
             compressed_vector_instance_y.create_vector(len(y))
             compressed_vector_instance_y.fill_from_vector(y)
+            compressed_vector_instance_y.set_decompressed_config(decompress)
             # return the compressed vector
             return compressed_vector_instance_x, compressed_vector_instance_y
         else:

@@ -46,19 +46,19 @@ class CompressedVector:
     
     def __getitem__(self, index):
         if isinstance(index, int):
+            # Handle negative indices like native Python lists
+            if index < 0:
+                index += self.n_elements
             if index < 0 or index >= self.n_elements:
-                reverse_index = self.n_elements + index
-                if reverse_index < 0:
-                    raise IndexError("Index out of range")
-                index = reverse_index
+                raise IndexError("Index out of bounds")
             return self._reconstruct_float_value(index)
 
         elif isinstance(index, (slice, list, np.ndarray, tuple)):
-            # Expand slice to a list of indices
             if self.get_decompressed:
                 if isinstance(index, slice):
+                    # Convert slice to a proper list of indices
                     index = range(*index.indices(self.n_elements))
-                
+
                 selected = np.array(index)
                 int_arr = np.asarray(self.integer_part)
                 dec_arr = np.asarray(self.decimal_part)
@@ -68,23 +68,29 @@ class CompressedVector:
                 float_arr = int_arr[selected] + dec_arr[selected] / denom
                 float_arr[sign_arr[selected] == 0] *= -1
                 return float_arr
-            
+
             else:
                 new_vector = CompressedVector(
                     decimal_places=self.decimal_places,
                     int_width=self.int_width,
                     get_decompressed=False
                 )
-                len_index = len(index) if isinstance(index, (list, np.ndarray, tuple)) else index.stop - index.start
-                new_vector.create_vector(len_index)
-                index_start = index.start if isinstance(index, slice) else index[0]
-                index_stop = index.stop if isinstance(index, slice) else index[-1] + 1
-                new_vector.fill_from_vector(self, start=index_start, end=index_stop)
+
+                if isinstance(index, slice):
+                    start, stop, step = index.indices(self.n_elements)
+                    index_range = range(start, stop, step)
+                    len_index = len(index_range)
+                    new_vector.create_vector(len_index)
+                    new_vector.fill_from_vector(self, start=start, end=stop)
+                else:
+                    len_index = len(index)
+                    new_vector.create_vector(len_index)
+                    new_vector.fill_from_vector(self, start=0, end=len_index)
+
                 return new_vector
 
         else:
             raise TypeError(f"Invalid index type: {type(index)}. Expected int, slice, list or ndarray.")
-
 
 
     def __setitem__(self, index, value):
@@ -224,6 +230,24 @@ class CompressedVector:
                 )
         return total
     
+    def destroy(self):
+        """
+        Destroy the compressed vector and free memory.
+        """
+        if self.integer_part is not None:
+            del self.integer_part
+            self.integer_part = None
+        if self.decimal_part is not None:
+            del self.decimal_part
+            self.decimal_part = None
+        if self.sign_part is not None:
+            del self.sign_part
+            self.sign_part = None
+        
+        # Reset attributes
+        self.n_elements = 0
+        self.current = 0
+        self.decimal_places = 0
 
     def _create_vector(self, vector_type):
         """
