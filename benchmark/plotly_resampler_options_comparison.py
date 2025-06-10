@@ -28,7 +28,7 @@ def default_config():
         }
     ]
 @exp.automain
-def run(cases, iterations, n_range, file_input_list, decimal_places, width):
+def run(cases, iterations, n_range, file_input_list, decimal_places, width, decompressed):
     input_handler_instance = InputHandler()
 
     def experiment_fn(x, y, option):
@@ -50,7 +50,7 @@ def run(cases, iterations, n_range, file_input_list, decimal_places, width):
             return diff
         raise ValueError(f"Unknown option: {option}")
 
-    results = run_with_timing(input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations, width)
+    results = run_with_timing(input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations, width, decompressed)
     # exp.log_scalar("num_cases", len(results))
     return results
 

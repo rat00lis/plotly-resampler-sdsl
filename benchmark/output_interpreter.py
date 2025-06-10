@@ -18,6 +18,9 @@ except Exception as e:
     print(f"Error retrieving experiment names: {e}")
     exp_names = []
 
+def get_n_size(experiment_values):
+    return experiment_values.get('n_size') or experiment_values.get('downsampling_size')
+
 def process_all_experiments_output(file_path_root=file_path_root, exp_names=exp_names):
     for exp_name in exp_names:
         try:
@@ -108,11 +111,11 @@ def get_exp_n_range(json_result):
     try:
         if json_result is None:
             return []
-            
+        
         n_range = []
         for experiment, experiment_values in json_result.items():
-            n_size = experiment_values.get('n_size')
-            if n_size not in n_range:
+            n_size = get_n_size(experiment_values)
+            if n_size is not None and n_size not in n_range:
                 n_range.append(n_size)
         return n_range
     except Exception as e:
@@ -120,24 +123,25 @@ def get_exp_n_range(json_result):
         traceback.print_exc()
         return []
 
+
 def get_exp_results(json_result):
     try:
         if json_result is None:
             print("Warning: Received None instead of JSON result data")
             return {}
-            
+
         results_dict = {}
 
         for experiment, experiment_values in json_result.items():
             try:
                 option = experiment_values.get('option')
                 mean = experiment_values.get('mean')
-                n_size = experiment_values.get('n_size')
                 stdev = experiment_values.get('stdev')
+                n_size = get_n_size(experiment_values)
 
                 # Skip entries with missing required values
                 if None in [option, n_size]:
-                    print(f"Warning: Skipping experiment with missing option or n_size: {experiment}")
+                    print(f"Warning: Skipping experiment with missing option or n_size/downsampling_size: {experiment}")
                     continue
 
                 this_experiment = {
@@ -146,7 +150,7 @@ def get_exp_results(json_result):
                         "stdev": stdev
                     }
                 }
-                
+
                 if n_size in results_dict:
                     results_dict[n_size].update(this_experiment)
                 else:
@@ -154,7 +158,7 @@ def get_exp_results(json_result):
             except Exception as e:
                 print(f"Error processing experiment {experiment}: {e}")
                 continue
-        
+
         # Sort the dictionary by n_size
         results_dict = dict(sorted(results_dict.items(), key=lambda item: item[0]))
         return results_dict
@@ -162,6 +166,7 @@ def get_exp_results(json_result):
         print(f"Error getting experiment results: {e}")
         traceback.print_exc()
         return {}
+
         
 def export_results_to_csv(results_dict, output_file):
     try:

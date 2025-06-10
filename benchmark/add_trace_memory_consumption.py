@@ -27,7 +27,7 @@ def default_config():
     ]
 
 @exp.automain
-def run(cases, iterations, n_range, file_input_list, decimal_places, width):
+def run(cases, iterations, n_range, file_input_list, decimal_places, width, decompressed):
     input_handler_instance = InputHandler()
 
     def experiment_fn(x, y, option):

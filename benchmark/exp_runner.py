@@ -10,7 +10,7 @@ def setup_experiment(exp_name, config_overrides=None):
     add_base_config(exp)
     return exp
 
-def run_with_timing(input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations, width):
+def run_with_timing(input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations, width, decompressed):
     results = {}
 
     for file_input in file_input_list:
@@ -59,7 +59,7 @@ def run_with_timing(input_handler_instance, experiment_fn, cases, n_range, file_
                 }
     return results
 
-def run_with_memory(input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations, width):
+def run_with_memory(input_handler_instance, experiment_fn, cases, n_range, file_input_list, decimal_places, iterations, width, decompressed):
     results = {}
 
     for file_input in file_input_list:
@@ -73,7 +73,8 @@ def run_with_memory(input_handler_instance, experiment_fn, cases, n_range, file_
                     decimal_places= decimal_places,
                     delimiter=";", 
                     column=1, 
-                    truncate= n_size
+                    truncate= n_size,
+                    decompressed=decompressed
                 )
                 if len(x) != len(y):
                     raise ValueError(
