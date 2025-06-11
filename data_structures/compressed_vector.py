@@ -230,6 +230,20 @@ class CompressedVector:
                 )
         return total
     
+    def compress(self, vector_type=sdsl4py.int_vector_64):
+        """
+        Compress the vector using the specified vector type.
+        Args:
+            vector_type: The type of vector to use for compression.
+        """
+        if self.integer_part is None or self.decimal_part is None or self.sign_part is None:
+            raise ValueError("Vectors not created. Call create_vector() first.")
+        
+        # Create compressed vectors
+        self.integer_part = vector_type(self.integer_part)
+        self.decimal_part = vector_type(self.decimal_part)
+        self.sign_part = vector_type(self.sign_part)
+
     def destroy(self):
         """
         Destroy the compressed vector and free memory.
